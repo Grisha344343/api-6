@@ -4,7 +4,7 @@ import os
 import random
 
 
-def generate_random_comic():
+def select_random_comic():
     last_comic_url = "https://xkcd.com/info.0.json"
     response = requests.get(last_comic_url)
     response.raise_for_status()
@@ -28,7 +28,7 @@ def save_image(url, name):
         file.write(response.content)
 
 
-def get_upload_url(token, version, group_id, name):
+def upload_url_on_server(token, version, group_id, name):
     params = {
         "access_token": token,
         "group_id": group_id,
@@ -54,7 +54,7 @@ def get_upload_url(token, version, group_id, name):
 
 
 
-def upload_comic_to_wall(photo, server, upload_hash, token, version, group_id):
+def save_comic_to_wall(photo, server, upload_hash, token, version, group_id):
     url = "https://api.vk.com/method/photos.saveWallPhoto"
     params = {
         "access_token": token,

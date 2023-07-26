@@ -33,25 +33,25 @@ def upload_url_on_server(token, version, group_id, name):
         "access_token": token,
         "group_id": group_id,
         "v": version
-    }
+     }
     url = "https://api.vk.com/method/photos.getWallUploadServer"
-    response = requests.get(url, params=params)
+    response = requests.get(url, params = params)
     response.raise_for_status()
+    check_errors(response)
     upload_url = response.json()["response"]["upload_url"]
     with open(f'{name}.png', 'rb') as file:
         url = upload_url
         files = {
-            'photo': file,
-
-        }
-        response = requests.post(url, files=files)
+            'photo': file
+         }
+        response = requests.post(url, files = files)
     response.raise_for_status()
+    check_errors(response)
     upload_response = response.json()
     server = upload_response['server']
     photo = upload_response['photo']
     upload_hash = upload_response['hash']
     return server, photo, upload_hash
-
 
 
 def save_comic_to_wall(photo, server, upload_hash, token, version, group_id):
@@ -63,9 +63,10 @@ def save_comic_to_wall(photo, server, upload_hash, token, version, group_id):
         "photo": photo,
         "server": server,
         "hash": upload_hash
-    }
-    response = requests.post(url, params=params)
+     }
+    response = requests.post(url, params = params)
     response.raise_for_status()
+    check_errors(response)
     upload_response = response.json()['response'][0]
     media_id = upload_response['id']
     owner_id = upload_response['owner_id']
@@ -82,9 +83,10 @@ def publish_comic_to_group(owner_id, media_id, token, version, group_id, comment
         "owner_id": -group_id,
         "message": comment,
         "from_group": '1'
-    }
-    response = requests.post(url, params=params)
+     }
+    response = requests.post(url, params = params)
     response.raise_for_status()
+    check_errors(response)
 
 
 def delete_image(name):
@@ -93,19 +95,26 @@ def delete_image(name):
         os.remove(myfile)
 
 
+def check_errors(response):
+    if "error" in response:
+        message = response["error"]["error_msg"]
+        code = response["error"]["error_code"]
+        raise requests.HTTPError(code, message)
+
+
 def main():
     load_dotenv()
     vk_apikey = os.getenv("VK_TOKEN")
     group_id = int(os.getenv("GROUP_ID"))
     version = 5.131
-    comic_url, comment, name = generate_random_comic()
-    save_image(comic_url, name)
-    server, photo, upload_hash = get_upload_url(vk_apikey, version, group_id, name)
-    media_id, owner_id = upload_comic_to_wall(photo, server, upload_hash, vk_apikey, version, group_id)
-    publish_comic_to_group(owner_id, media_id, vk_apikey, version, group_id, comment)
-    delete_image(name)
-
-
+    try:
+        comic_url, comment, name = select_random_comic()
+        save_image(comic_url, name)
+        server, photo, upload_hash = upload_url_on_server(vk_apikey, version, group_id, name)
+        media_id, owner_id = save_comic_to_wall(photo, server, upload_hash, vk_apikey, version, group_id)
+        publish_comic_to_group(owner_id, media_id, vk_apikey, version, group_id, comment)
+    finally:
+        delete_image(name)
 
 
 if __name__ == "__main__":

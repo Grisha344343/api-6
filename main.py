@@ -28,7 +28,7 @@ def save_image(url, name):
         file.write(response.content)
 
 
-def upload_url_on_server(token, version, group_id, name):
+def upload_comic_on_server(token, version, group_id, name):
     params = {
         "access_token": token,
         "group_id": group_id,
